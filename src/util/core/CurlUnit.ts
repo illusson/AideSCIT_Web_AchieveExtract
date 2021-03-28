@@ -123,16 +123,16 @@ export class FormBodyBuilder {
                 if (form_string !== "") {
                     form_string = form_string + "&";
                 }
-                if (key !== "access_token") {
+                // if (key !== "access_token") {
                     form_string = form_string + key + "=" + value;
-                }
+                // }
 
                 if (body_string !== "") {
                     body_string = body_string + "&";
                 }
-                if (key !== "access_token"){
+                // if (key !== "access_token"){
                     body_string = body_string + key + "=" + encodeURIComponent(value);
-                }
+                // }
             }
         }())
         if (app_secret !== ""){

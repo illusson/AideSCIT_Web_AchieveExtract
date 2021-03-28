@@ -38,7 +38,7 @@ export class LoginHelper {
                     callback.onFailure(-105, "服务器内部出错");
                 }
             }
-        })
+        }())
     }
 
     public springboard(access: string, callback: SpringboardCallback){
@@ -64,7 +64,7 @@ export class LoginHelper {
                     callback.onFailure(-115, "服务器内部出错");
                 }
             }
-        })
+        }())
     }
 
     public refreshToken(access_token: string, refresh_token: string, callback: LoginCallback){
