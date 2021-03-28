@@ -1,0 +1,17 @@
+
+.login-base {
+  align-content: center;
+  margin: 50px auto;
+  width: 400px;
+}
+
+.login-content {
+  margin-left: 50px;
+  margin-right: 50px;
+  margin-bottom: 10px;
+}
+
+.login-form {
+  margin-top: 20px;
+}
+

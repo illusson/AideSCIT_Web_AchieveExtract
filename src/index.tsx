@@ -3,13 +3,12 @@ import ReactDOM from 'react-dom';
 import './index.css';
 import reportWebVitals from './reportWebVitals';
 import {BrowserRouter as Router, Route} from "react-router-dom";
-import Login from "./pages/Login/Login";
-import Extract from "./pages/Extract/Extract";
+import Extract from "./pages/Home/Extract";
+// import { createBrowserHistory } from 'history';
 
 ReactDOM.render(
     <Router>
-        <Route path={"/"} component={ Login } />
-        <Route path={"/extract/:access_token"} component={ Extract } />
+        <Route path={"/"} component={ Extract } />
     </Router>,
     document.getElementById('root')
 );
