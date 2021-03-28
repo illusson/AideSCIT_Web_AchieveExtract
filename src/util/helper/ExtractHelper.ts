@@ -7,5 +7,7 @@ export class ExtractHelper {
         this.access_token = access_token
     }
 
+    add(semester: number, year: string, data: any[]){
 
+    }
 }

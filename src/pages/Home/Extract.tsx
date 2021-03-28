@@ -1,18 +1,40 @@
 import './Extract.css';
 
-import {AppBar, Button, Card, CardContent, Grid, LinearProgress, Table, TableBody, TableCell,
-    TableContainer, TableHead, TableRow, TextField, Toolbar, Typography} from "@material-ui/core";
+import {
+    AppBar,
+    Button,
+    Card,
+    CardContent,
+    FormControl,
+    Grid,
+    InputLabel,
+    LinearProgress, MenuItem,
+    Select,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TablePagination,
+    TableRow,
+    TextField,
+    Toolbar,
+    Typography
+} from "@material-ui/core";
 import React, {ChangeEvent} from "react";
 import XLSX from 'xlsx';
 import {LoginCallback, LoginHelper} from "../../util/helper/LoginHelper";
 import {CurlToolException} from "../../util/core/CurlUnit";
 import {UserInfoCallback, UserInfoHelper} from "../../util/helper/UserInfoHelper";
+import {DayCallback, DayHelper} from "../../util/helper/DayHelper";
+import {ExtractHelper} from "../../util/helper/ExtractHelper";
 
 export default class Extract extends React.Component {
     accessToken: string = "b76ee32c376c19a7.MjAxOTQwMDEwMDc0JjE2MTY2NTE3MDYl.d5a4728a9e389970"
     file: File | null | undefined = null
     findFile: HTMLInputElement | null = null
     arrayBuffer: string | ArrayBuffer | null = null
+    task_id: number | undefined
 
     state = {
         username: "",
@@ -20,9 +42,23 @@ export default class Extract extends React.Component {
 
         name: "赵海天 同学",
         filePath: "",
-        targetTaskData: [],
+        targetTaskData: [
+            {uid: "暂无数据", name: ""},
+        ],
+        yearData: [""],
+        semesterData: [1, 2],
+        year: "",
+        semester: 0,
         targetTaskCount: 0,
         targetTaskPosted: 0,
+        targetTaskSuccess: 0,
+
+        page1: 0,
+        rowsPerPage1: 10,
+        page2: 0,
+        rowsPerPage2: 10,
+        page3: 0,
+        rowsPerPage3: 10,
 
         warnData: [
             {uid: "暂无数据", name: "", nameDatabase: ""},
@@ -31,11 +67,37 @@ export default class Extract extends React.Component {
             {uid: "暂无数据", name: "", reason: ""},
         ],
 
-        login_base_display: "none",
-        extract_base_display: "block",
+        login_base_display: this.accessToken === "" ? "block" : "none",
+        extract_base_display: this.accessToken === "" ? "none" : "block",
         action_doing: false,
         login_action_progress: "none",
     };
+
+    componentDidMount() {
+        const this_getDayData = this
+        new DayHelper().get(new class implements DayCallback {
+            onFailure(code: number, message?: string, e?: CurlToolException) {
+                this_getDayData.setState({
+                    login_action: true,
+                })
+                alert("学年信息获取失败，请尝试刷新网页")
+                return
+            }
+
+            onResult(semester: number, school_year: string) {
+                const year: number = Number.parseInt(school_year.split("-", 2)[0])
+                const yearData = []
+                for (let i = year - 5; i <= year; i++){
+                    yearData.push(i.toString() + "-" + (i + 1).toString())
+                }
+                this_getDayData.setState({
+                    yearData: yearData,
+                    semester: semester,
+                    year: school_year,
+                })
+            }
+        }())
+    }
 
     onLoginAction() {
         if (this.state.username === "" || this.state.password === ""){
@@ -157,7 +219,24 @@ export default class Extract extends React.Component {
     }
 
     onPostData(){
+        let count = this.state.targetTaskCount
 
+        let postCount: number = 0
+        while (postCount < count){
+            const random = this.GetRandomNum(80, 99)
+            let postStart = postCount
+            let postEnd = postCount + random
+            if (postEnd >= count){
+                postEnd = count - 1
+            } else {
+                postCount += random + 1
+            }
+            const data = []
+            for(let i = postStart; i <= postEnd; ++i){
+                data.push(this.state.targetTaskData[i])
+            }
+            new ExtractHelper(this.accessToken).add(this.state.semester, this.state.year, data)
+        }
     }
 
     render() {
@@ -231,6 +310,91 @@ export default class Extract extends React.Component {
                                 </Button>
                             </Grid>
                             <Grid item xs={2} />
+                            <Grid item xs={12}>
+                                <Card>
+                                    <TableContainer style={{maxHeight: 350}}>
+                                        <Table stickyHeader aria-label="sticky table">
+                                            <TableHead>
+                                                <TableRow>
+                                                    <TableCell>学号</TableCell>
+                                                    <TableCell>姓名</TableCell>
+                                                </TableRow>
+                                            </TableHead>
+                                            <TableBody>{
+                                                this.state.targetTaskData.slice(
+                                                    this.state.page1 * this.state.rowsPerPage1, this.state.page1 * this.state.rowsPerPage1 + this.state.rowsPerPage1
+                                                ).map((row) => {
+                                                    return (
+                                                        <TableRow hover role="checkbox" tabIndex={-1} key={row.uid}>
+                                                            <TableCell scope="row">{row.uid}</TableCell>
+                                                            <TableCell align="left">{row.name}</TableCell>
+                                                        </TableRow>
+                                                    );
+                                                })
+                                            }</TableBody>
+                                        </Table>
+                                    </TableContainer>
+                                    <TablePagination
+                                        rowsPerPageOptions={[10, 25, 100]}
+                                        component="div"
+                                        count={this.state.targetTaskData.length}
+                                        rowsPerPage={this.state.rowsPerPage1}
+                                        page={this.state.page1}
+                                        onChangePage={(event: unknown, newPage: number) => {
+                                            this.setState({page1: newPage})
+                                        }}
+                                        onChangeRowsPerPage={(event: React.ChangeEvent<HTMLInputElement>) => {
+                                            this.setState({
+                                                rowsPerPage1: +event.target.value,
+                                                page1: 0
+                                            })
+                                        }} />
+                                </Card>
+                            </Grid>
+                            <Grid item xs={3} />
+                            <Grid item xs={3}>
+                                <FormControl fullWidth={true}>
+                                    <InputLabel>学年</InputLabel>
+                                    <Select
+                                        value={this.state.year}
+                                        onChange={(event: React.ChangeEvent<{ value: unknown }>) => {
+                                            this.setState({
+                                                year: event.target.value as string
+                                            })
+                                        }}
+                                        displayEmpty>
+                                        {
+                                            this.state.yearData.map((row) => {
+                                                return (
+                                                    <MenuItem value={row}>{row}</MenuItem>
+                                                );
+                                            })
+                                        }
+                                    </Select>
+                                </FormControl>
+                            </Grid>
+                            <Grid item xs={3}>
+                                <FormControl fullWidth={true}>
+                                    <InputLabel>学期</InputLabel>
+                                    <Select
+                                        value={this.state.semester}
+                                        onChange={(event: React.ChangeEvent<{ value: unknown }>) => {
+                                            this.setState({
+                                                semester: Number.parseInt(event.target.value as string)
+                                            })
+                                        }}
+                                        displayEmpty>
+                                        {
+                                            this.state.semesterData.map((row) => {
+                                                return (
+                                                    <MenuItem value={row}>{row}</MenuItem>
+                                                );
+                                            })
+                                        }
+                                    </Select>
+                                </FormControl>
+                            </Grid>
+                            <Grid item xs={3} />
                             <Grid item xs />
                             <Grid item xs={5}>
                                 <Button
@@ -243,7 +407,7 @@ export default class Extract extends React.Component {
                             <Grid item xs />
                             <Grid item xs={12}>
                                 <Typography component={"p"} color={"textSecondary"} style={{textAlign: "center"}}>
-                                    已提交 {this.state.targetTaskPosted} 条数据，共 {this.state.targetTaskCount} 条
+                                    已提交 {this.state.targetTaskPosted} 条数据，其中处理成功 {this.state.targetTaskSuccess} 条，共 {this.state.targetTaskCount} 条
                                 </Typography>
                             </Grid>
                             <Grid item xs={12}>
@@ -255,30 +419,47 @@ export default class Extract extends React.Component {
                                 </Typography>
                             </Grid>
                             <Grid item xs={12}>
-                                <TableContainer component={Card}>
-                                    <Table aria-label="错误项">
-                                        <TableHead>
-                                            <TableRow>
-                                                <TableCell>学号</TableCell>
-                                                <TableCell>姓名</TableCell>
-                                                <TableCell>错误原因</TableCell>
-                                            </TableRow>
-                                        </TableHead>
-                                        <TableBody>
-                                            {
-                                                this.state.failedData.map((row) => (
-                                                    <TableRow key={row.uid}>
-                                                        <TableCell scope="row">
-                                                            {row.uid}
-                                                        </TableCell>
-                                                        <TableCell align="right">{row.name}</TableCell>
-                                                        <TableCell align="right">{row.reason}</TableCell>
-                                                    </TableRow>
-                                                ))
-                                            }
-                                        </TableBody>
-                                    </Table>
-                                </TableContainer>
+                                <Card>
+                                    <TableContainer style={{maxHeight: 350}}>
+                                        <Table stickyHeader aria-label="sticky table">
+                                            <TableHead>
+                                                <TableRow>
+                                                    <TableCell>学号</TableCell>
+                                                    <TableCell>姓名</TableCell>
+                                                    <TableCell>错误原因</TableCell>
+                                                </TableRow>
+                                            </TableHead>
+                                            <TableBody>{
+                                                this.state.failedData.slice(
+                                                    this.state.page2 * this.state.rowsPerPage2, this.state.page2 * this.state.rowsPerPage2 + this.state.rowsPerPage2
+                                                ).map((row) => {
+                                                    return (
+                                                        <TableRow key={row.uid}>
+                                                            <TableCell scope="row">{row.uid}</TableCell>
+                                                            <TableCell align="right">{row.name}</TableCell>
+                                                            <TableCell align="right">{row.reason}</TableCell>
+                                                        </TableRow>
+                                                    );
+                                                })
+                                            }</TableBody>
+                                        </Table>
+                                    </TableContainer>
+                                    <TablePagination
+                                        rowsPerPageOptions={[10, 25, 100]}
+                                        component="div"
+                                        count={this.state.failedData.length}
+                                        rowsPerPage={this.state.rowsPerPage2}
+                                        page={this.state.page2}
+                                        onChangePage={(event: unknown, newPage: number) => {
+                                            this.setState({page2: newPage})
+                                        }}
+                                        onChangeRowsPerPage={(event: React.ChangeEvent<HTMLInputElement>) => {
+                                            this.setState({
+                                                rowsPerPage2: +event.target.value,
+                                                page2: 0
+                                            })
+                                        }} />
+                                </Card>
                             </Grid>
                             <Grid item xs={12}>
                                 <Typography variant={"h6"} component={"p"}>
@@ -289,35 +470,58 @@ export default class Extract extends React.Component {
                                 </Typography>
                             </Grid>
                             <Grid item xs={12}>
-                                <TableContainer component={Card}>
-                                    <Table aria-label="警告项">
-                                        <TableHead>
-                                            <TableRow>
-                                                <TableCell>学号</TableCell>
-                                                <TableCell>提交的姓名</TableCell>
-                                                <TableCell>数据库中的姓名</TableCell>
-                                            </TableRow>
-                                        </TableHead>
-                                        <TableBody>
-                                            {
-                                                this.state.warnData.map((row) => (
-                                                    <TableRow key={row.uid}>
-                                                        <TableCell scope="row">
-                                                            {row.uid}
-                                                        </TableCell>
-                                                        <TableCell align="right">{row.name}</TableCell>
-                                                        <TableCell align="right">{row.nameDatabase}</TableCell>
-                                                    </TableRow>
-                                                ))
-                                            }
-                                        </TableBody>
-                                    </Table>
-                                </TableContainer>
+                                <Card>
+                                    <TableContainer style={{maxHeight: 350}}>
+                                        <Table stickyHeader aria-label="sticky table">
+                                            <TableHead>
+                                                <TableRow>
+                                                    <TableCell>学号</TableCell>
+                                                    <TableCell>提交的姓名</TableCell>
+                                                    <TableCell>数据库中的姓名</TableCell>
+                                                </TableRow>
+                                            </TableHead>
+                                            <TableBody>{
+                                                this.state.warnData.slice(
+                                                    this.state.page3 * this.state.rowsPerPage3, this.state.page3 * this.state.rowsPerPage3 + this.state.rowsPerPage3
+                                                ).map((row) => {
+                                                    return (
+                                                        <TableRow key={row.uid}>
+                                                            <TableCell scope="row">{row.uid}</TableCell>
+                                                            <TableCell align="right">{row.name}</TableCell>
+                                                            <TableCell align="right">{row.nameDatabase}</TableCell>
+                                                        </TableRow>
+                                                    );
+                                                })
+                                            }</TableBody>
+                                        </Table>
+                                    </TableContainer>
+                                    <TablePagination
+                                        rowsPerPageOptions={[10, 25, 100]}
+                                        component="div"
+                                        count={this.state.warnData.length}
+                                        rowsPerPage={this.state.rowsPerPage3}
+                                        page={this.state.page3}
+                                        onChangePage={(event: unknown, newPage: number) => {
+                                            this.setState({page3: newPage})
+                                        }}
+                                        onChangeRowsPerPage={(event: React.ChangeEvent<HTMLInputElement>) => {
+                                            this.setState({
+                                                rowsPerPage3: +event.target.value,
+                                                page3: 0
+                                            })
+                                        }} />
+                                </Card>
                             </Grid>
                         </Grid>
                     </div>
                 </div>
             </div>
         );
+    }
+
+    public GetRandomNum(min: number, max: number): number {
+        const range = min - max;
+        const rand = Math.random();
+        return min + Math.round(rand * range);
     }
 }

@@ -53,7 +53,10 @@ export class APIHelper {
     }
 
     public getDayCall(): CurlCall {
-        return this.onReturn("day")
+        const url = "day"
+        const args: Map<string, any> = new Map<string, any>()
+            .set("ts", APIHelper.getTS());
+        return this.onReturn(url, args, APIHelper.METHOD_POST, true);
     }
 
     public getInfoCall(): CurlCall {
@@ -83,12 +86,35 @@ export class APIHelper {
     }
 
     public getAchievementCall(year: string, semester: number): CurlCall {
-        const url = "achievement"
+        const url = "achieve"
         const args: Map<string, any> = new Map<string, any>()
             .set("access_token", this.access_token)
             .set("semester", semester)
             .set("ts", APIHelper.getTS())
             .set("year", year);
+        return this.onReturn(url, args, APIHelper.METHOD_POST, true);
+    }
+
+    public getExtractAddCall(year: string, semester: number, task_data: string, task_id: number|undefined): CurlCall {
+        const url = "achieve/extract/add"
+        const args: Map<string, any> = new Map<string, any>()
+            .set("access_token", this.access_token)
+            .set("semester", semester)
+            .set("tasks", task_data)
+        if (task_id !== undefined){
+            args.set("task_id", task_id)
+        }
+        args.set("year", year)
+            .set("ts", APIHelper.getTS())
+        return this.onReturn(url, args, APIHelper.METHOD_POST, true);
+    }
+
+    public getExtractDoneCall(task_id: number): CurlCall {
+        const url = "achieve/extract/done"
+        const args: Map<string, any> = new Map<string, any>()
+            .set("access_token", this.access_token)
+            .set("task_id", task_id)
+            .set("ts", APIHelper.getTS())
         return this.onReturn(url, args, APIHelper.METHOD_POST, true);
     }
 
