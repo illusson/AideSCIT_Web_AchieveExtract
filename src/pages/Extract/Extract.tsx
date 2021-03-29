@@ -22,7 +22,7 @@ import {
 } from "@material-ui/core";
 import React, {ChangeEvent} from "react";
 import XLSX from 'xlsx';
-import {ExtractAddCallback, ExtractHelper} from "../../application/helper/ExtractHelper";
+import {ExtractAddCallback, ExtractDoneCallback, ExtractHelper} from "../../application/helper/ExtractHelper";
 import {ReactComponentCompact} from "../../application/core/ReactComponentCompact";
 import {withRouter} from "react-router-dom";
 import {CurlToolException} from "../../application/util/CurlUnit";
@@ -50,6 +50,8 @@ class Extract extends ReactComponentCompact {
         targetTaskCount: 0,
         targetTaskPosted: 0,
         targetTaskSuccess: 0,
+        extractResultLink: "",
+        extractResultSeverity: 'success',
 
         page1: 0,
         rowsPerPage1: 10,
@@ -90,6 +92,9 @@ class Extract extends ReactComponentCompact {
     }
 
     onReadData(e: ChangeEvent<HTMLInputElement>, context: Extract){
+        context.setState({
+            action_doing: true
+        })
         context.file = e.target.files?.item(0)
         if (context.file == null){
             return
@@ -134,19 +139,32 @@ class Extract extends ReactComponentCompact {
                     })
                 }
                 context.setState({
+                    extractResultLink: "",
                     targetTaskData: targetTaskData,
                     targetTaskCount: data.length - 1,
+                    targetTaskPosted: 0,
                 })
             } catch (e) {
                 alert("文件格式不正确。" + e.message)
                 return;
             }
+            context.setState({
+                action_doing: false
+            })
         }
-        context.setState({filePath: context.file.name})
+        context.setState({
+            filePath: context.file.name
+        })
         fileReader.readAsArrayBuffer(context.file);
     }
 
     onPostData(){
+        this.setState({
+            action_doing: true,
+            targetTaskSuccess: 0,
+            warnData: new Array<WarnTaskInfo>(),
+            failedData: new Array<FailedTaskInfo>(),
+        })
         let count = this.state.targetTaskCount
         this.task_id = undefined
         let postCount: number = 0
@@ -154,11 +172,7 @@ class Extract extends ReactComponentCompact {
         const accessToken = this.getSharedPreference("user")
             .getString("access_token", "")
         while (postCount < count){
-            console.log(postCount)
             const random = this.getRandomNum(80, 99)
-            this.setState({
-                targetTaskPosed: context.state.targetTaskPosted + random
-            })
             let postStart = postCount
             let postEnd = postCount + random
             if (postEnd >= count){
@@ -176,19 +190,63 @@ class Extract extends ReactComponentCompact {
                         failed.push(new FailedTaskInfo(data[i].uid, data[i].name, message == null ? "网络请求失败" : message))
                     }
                     context.setState({
-                        failedData: failed
+                        targetTaskPosted: postEnd + 1,
+                        failedData: failed,
                     })
+                    if (postEnd + 1 === context.state.targetTaskCount){
+                        context.onGetLink()
+                    }
                 }
 
                 onResult(status: ExtractAddStatusData) {
                     context.task_id = status.task_id
                     context.setState({
+                        targetTaskPosted: postEnd + 1,
                         targetTaskSuccess: status.success.length,
                         warnData: context.state.warnData.concat(status.warn),
                         failedData: context.state.failedData.concat(status.failed),
                     })
+                    if (postEnd + 1 === context.state.targetTaskCount){
+                        context.onGetLink()
+                    }
                 }
             }())
+        }
+    }
+
+
+    onGetLink(){
+        const context = this
+        const accessToken = this.getSharedPreference("user")
+            .getString("access_token", "")
+        if (this.task_id === undefined){
+            return
+        }
+        new ExtractHelper(accessToken).done(this.task_id, new class implements ExtractDoneCallback {
+            onFailure(code: number, message?: string, e?: CurlToolException) {
+                if (code === -1001){
+                    setTimeout(() => {
+                        context.onGetLink()
+                    }, 200)
+                    return
+                }
+                alert("文件打包失败。" + message)
+            }
+
+            onResult(link: string) {
+                context.setState({
+                    action_doing: false,
+                    extractResultLink: link
+                })
+            }
+        }())
+    }
+
+    onClick(){
+        if (this.state.extractResultLink === ""){
+            this.onPostData()
+        } else {
+            window.open(this.state.extractResultLink, "_blank")
         }
     }
 
@@ -273,7 +331,7 @@ class Extract extends ReactComponentCompact {
                             <FormControl fullWidth={true}>
                                 <InputLabel>学年</InputLabel>
                                 <Select
-                                    value={this.state.year}
+                                    value={this.state.year} disabled={this.state.action_doing}
                                     onChange={(event: React.ChangeEvent<{ value: unknown }>) => {
                                         this.setState({
                                             year: event.target.value as string
@@ -294,7 +352,7 @@ class Extract extends ReactComponentCompact {
                             <FormControl fullWidth={true}>
                                 <InputLabel>学期</InputLabel>
                                 <Select
-                                    value={this.state.semester}
+                                    value={this.state.semester} disabled={this.state.action_doing}
                                     onChange={(event: React.ChangeEvent<{ value: unknown }>) => {
                                         this.setState({
                                             semester: Number.parseInt(event.target.value as string)
@@ -315,18 +373,13 @@ class Extract extends ReactComponentCompact {
                         <Grid item xs />
                         <Grid item xs={5}>
                             <Button
-                                color={"primary"} variant={"contained"}
-                                fullWidth={true} disabled={this.state.filePath === "" || this.state.action_doing}
-                                onClick={this.onPostData.bind(this)}>
-                                提交
+                                color={"primary"} variant={"contained"} fullWidth={true}
+                                disabled={this.state.filePath === "" || this.state.action_doing}
+                                onClick={this.onClick.bind(this)}>
+                                {this.state.extractResultLink === "" ? "提交" : "下载"}
                             </Button>
                         </Grid>
                         <Grid item xs />
-                        <Grid item xs={12}>
-                            <Typography component={"p"} color={"textSecondary"} style={{textAlign: "center"}}>
-                                已提交 {this.state.targetTaskPosted} 条数据，其中处理成功 {this.state.targetTaskSuccess} 条，共 {this.state.targetTaskCount} 条
-                            </Typography>
-                        </Grid>
                         <Grid item xs={12}>
                             <Typography variant={"h6"} component={"p"}>
                                 错误项

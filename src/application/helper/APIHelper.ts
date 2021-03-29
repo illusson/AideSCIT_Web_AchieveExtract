@@ -1,6 +1,5 @@
 import {CurlCall, CurlClientBuilder, CurlRequestBuilder, FormBodyBuilder} from "../util/CurlUnit";
 import {Map, MapForEachCallback} from "../core/Map";
-import {Base64Util} from "../util/Base64Util";
 import {SingleTaskInfo} from "../data/ExtractAddStatusData";
 
 export class APIHelper {
@@ -106,8 +105,8 @@ export class APIHelper {
             args.set("task_id", task_id)
         }
         args.set("tasks", btoa(unescape(encodeURIComponent(JSON.stringify(task_data)))))
-            .set("year", year)
             .set("ts", APIHelper.getTS())
+            .set("year", year)
         return this.onReturn(url, args, APIHelper.METHOD_POST, true);
     }
 
