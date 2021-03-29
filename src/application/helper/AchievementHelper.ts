@@ -1,6 +1,6 @@
-import {CookieUnit} from "../core/CookieUnit";
+import {CookieUnit} from "../util/CookieUnit";
 import {APIHelper} from "./APIHelper";
-import {CurlCall, CurlCallback, CurlResponse, CurlToolException} from "../core/CurlUnit";
+import {CurlCall, CurlCallback, CurlResponse, CurlToolException} from "../util/CurlUnit";
 import {FailedMarkData} from "../data/FailedMarkData";
 import {PassedMarkData} from "../data/PassedMarkData";
 

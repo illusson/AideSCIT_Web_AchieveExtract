@@ -1,4 +1,4 @@
-import {Map, MapForEachCallback} from "./Map";
+import {Map, MapForEachCallback} from "../core/Map";
 
 export class CurlClientBuilder {
     private follow_location: boolean = true;

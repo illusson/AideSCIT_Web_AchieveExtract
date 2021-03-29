@@ -1,4 +1,4 @@
-import {CurlCall, CurlCallback, CurlResponse, CurlToolException} from "../core/CurlUnit";
+import {CurlCall, CurlCallback, CurlResponse, CurlToolException} from "../util/CurlUnit";
 import {APIHelper} from "./APIHelper";
 
 export class UserInfoHelper {

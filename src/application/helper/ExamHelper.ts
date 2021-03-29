@@ -1,7 +1,7 @@
 import {ExamData} from "../data/ExamData";
-import {CurlCall, CurlCallback, CurlResponse, CurlToolException} from "../core/CurlUnit";
+import {CurlCall, CurlCallback, CurlResponse, CurlToolException} from "../util/CurlUnit";
 import {APIHelper} from "./APIHelper";
-import {CookieUnit} from "../core/CookieUnit";
+import {CookieUnit} from "../util/CookieUnit";
 
 export class ExamHelper {
     private readonly access_token: string;

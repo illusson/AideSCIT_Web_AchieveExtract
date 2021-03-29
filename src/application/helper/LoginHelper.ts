@@ -1,6 +1,6 @@
-import {CurlCall, CurlCallback, CurlResponse, CurlToolException} from "../core/CurlUnit";
+import {CurlCall, CurlCallback, CurlResponse, CurlToolException} from "../util/CurlUnit";
 import {APIHelper} from "./APIHelper";
-import {RSAStaticUnit} from "../core/RSAStaticUnit";
+import {RSAStaticUnit} from "../util/RSAStaticUnit";
 
 export class LoginHelper {
     public login(username: string, password: string, callback: LoginCallback) {

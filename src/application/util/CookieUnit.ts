@@ -1,4 +1,4 @@
-import {Map} from "./Map";
+import {Map} from "../core/Map";
 import {Log} from "./Log";
 
 export class CookieUnit {

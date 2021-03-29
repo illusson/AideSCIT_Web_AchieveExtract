@@ -1,5 +1,7 @@
-import {CurlCall, CurlClientBuilder, CurlRequestBuilder, FormBodyBuilder} from "../core/CurlUnit";
+import {CurlCall, CurlClientBuilder, CurlRequestBuilder, FormBodyBuilder} from "../util/CurlUnit";
 import {Map, MapForEachCallback} from "../core/Map";
+import {Base64Util} from "../util/Base64Util";
+import {SingleTaskInfo} from "../data/ExtractAddStatusData";
 
 export class APIHelper {
     public static readonly debug: boolean = true;
@@ -95,16 +97,16 @@ export class APIHelper {
         return this.onReturn(url, args, APIHelper.METHOD_POST, true);
     }
 
-    public getExtractAddCall(year: string, semester: number, task_data: string, task_id: number|undefined): CurlCall {
+    public getExtractAddCall(year: string, semester: number, task_data: SingleTaskInfo[], task_id: number|undefined): CurlCall {
         const url = "achieve/extract/add"
         const args: Map<string, any> = new Map<string, any>()
             .set("access_token", this.access_token)
             .set("semester", semester)
-            .set("tasks", task_data)
         if (task_id !== undefined){
             args.set("task_id", task_id)
         }
-        args.set("year", year)
+        args.set("tasks", btoa(unescape(encodeURIComponent(JSON.stringify(task_data)))))
+            .set("year", year)
             .set("ts", APIHelper.getTS())
         return this.onReturn(url, args, APIHelper.METHOD_POST, true);
     }

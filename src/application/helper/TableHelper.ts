@@ -1,7 +1,7 @@
-import {CurlCall, CurlCallback, CurlResponse, CurlToolException} from "../core/CurlUnit";
+import {CurlCall, CurlCallback, CurlResponse, CurlToolException} from "../util/CurlUnit";
 import {TableData} from "../data/TableData";
 import {APIHelper} from "./APIHelper";
-import {CookieUnit} from "../core/CookieUnit";
+import {CookieUnit} from "../util/CookieUnit";
 
 export class TableHelper {
     private readonly access_token: string;
