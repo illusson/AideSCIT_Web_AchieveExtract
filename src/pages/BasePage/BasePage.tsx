@@ -10,9 +10,9 @@ class BasePage extends ReactComponentCompact {
         const location = this.props.location
         return (
             <Switch location={location}>
-                <Route exact path={"/"} component={ Welcome } />
-                <Route exact path={"/login"} component={ Login } />
-                <Route exact path={"/extract"} component={ Extract } />
+                <Route exact path={"/web"} component={ Welcome } />
+                <Route exact path={"/web/login"} component={ Login } />
+                <Route exact path={"/web/achieve/extract"} component={ Extract } />
             </Switch>
         )
     }

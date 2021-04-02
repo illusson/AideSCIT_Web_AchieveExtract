@@ -31,12 +31,12 @@ class Welcome extends ReactComponentCompact {
                 switch (true) {
                     case !is_login:
                     case refresh_expired:
-                        this_componentDidMount.props.history.replace("/login")
+                        this_componentDidMount.props.history.replace("/web/login")
                         break
                     case access_expired:
                         break
                     default:
-                        this_componentDidMount.props.history.replace("/extract")
+                        this_componentDidMount.props.history.replace("/web/achieve/extract")
                 }
             }
         }())

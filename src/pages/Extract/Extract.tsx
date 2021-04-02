@@ -69,7 +69,7 @@ class Extract extends ReactComponentCompact {
 
     componentDidMount() {
         if (!ReactComponentCompact.setup){
-            this.props.history.replace("/")
+            this.props.history.replace("/web")
             return
         }
         const sp = this.getSharedPreference("user")
@@ -359,13 +359,9 @@ class Extract extends ReactComponentCompact {
                                         })
                                     }}
                                     displayEmpty>
-                                    {
-                                        this.state.semesterData.map((row) => {
-                                            return (
-                                                <MenuItem value={row}>{row}</MenuItem>
-                                            );
-                                        })
-                                    }
+                                    <MenuItem value={0}>全年</MenuItem>
+                                    <MenuItem value={1}>1</MenuItem>
+                                    <MenuItem value={2}>2</MenuItem>
                                 </Select>
                             </FormControl>
                         </Grid>

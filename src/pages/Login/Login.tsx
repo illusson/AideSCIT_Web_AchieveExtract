@@ -9,8 +9,8 @@ import {ReactComponentCompact} from "../../application/core/ReactComponentCompac
 import {withRouter} from "react-router-dom";
 
 class Login extends ReactComponentCompact {
-    accessToken: string = "b76ee32c376c19a7.MjAxOTQwMDEwMDc0JjE2MTY2NTE3MDYl.d5a4728a9e389970"
-    refreshToken: string = "b76ee32c376c19a7.MjAxOTQwMDEwMDc0JjE2MTY2NTE3MDYl.d5a4728a9e389970"
+    accessToken: string = ""
+    refreshToken: string = ""
 
     state = {
         username: "",
@@ -22,7 +22,7 @@ class Login extends ReactComponentCompact {
 
     componentDidMount() {
         if (!ReactComponentCompact.setup){
-            this.props.history.push("/")
+            this.props.history.push("/web")
         }
     }
 
@@ -87,7 +87,7 @@ class Login extends ReactComponentCompact {
                     .putString("userClass", userClass)
                     .putNumber("grade", grade)
                     .apply()
-                this_getUserInfo.props.history.replace("/extract")
+                this_getUserInfo.props.history.replace("/web/achieve/extract")
             }
         }())
     }
