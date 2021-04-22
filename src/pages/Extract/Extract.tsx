@@ -42,6 +42,7 @@ class Extract extends ReactComponentCompact {
     state = {
         name: "赵海天 同学",
         filePath: "",
+        extractButton: "提交",
         targetTaskData: new Array<SingleTaskInfo>(),
         yearData: [""],
         semesterData: [1, 2],
@@ -158,6 +159,8 @@ class Extract extends ReactComponentCompact {
         fileReader.readAsArrayBuffer(context.file);
     }
 
+    postCount: number = 0
+    count: number = 0
     onPostData(){
         this.setState({
             action_doing: true,
@@ -165,55 +168,67 @@ class Extract extends ReactComponentCompact {
             warnData: new Array<WarnTaskInfo>(),
             failedData: new Array<FailedTaskInfo>(),
         })
-        let count = this.state.targetTaskCount
+        this.count = this.state.targetTaskCount
         this.task_id = undefined
-        let postCount: number = 0
+        this.postCount = 0
         const context = this
         const accessToken = this.getSharedPreference("user")
             .getString("access_token", "")
-        while (postCount < count){
-            const random = this.getRandomNum(80, 99)
-            let postStart = postCount
-            let postEnd = postCount + random
-            if (postEnd >= count){
-                postEnd = count - 1
-            }
-            postCount += random + 1
-            const data: SingleTaskInfo[] = []
-            for(let i = postStart; i <= postEnd; ++i){
-                data.push(this.state.targetTaskData[i])
-            }
-            new ExtractHelper(accessToken).add(this.state.semester, this.state.year, this.task_id, data, new class implements ExtractAddCallback {
-                onFailure(code: number, message?: string, e?: CurlToolException) {
-                    const failed: FailedTaskInfo[] = []
-                    for (let i = 0; i < data.length; i++) {
-                        failed.push(new FailedTaskInfo(data[i].uid, data[i].name, message == null ? "网络请求失败" : message))
-                    }
-                    context.setState({
-                        targetTaskPosted: postEnd + 1,
-                        failedData: failed,
-                    })
-                    if (postEnd + 1 === context.state.targetTaskCount){
-                        context.onGetLink()
-                    }
-                }
-
-                onResult(status: ExtractAddStatusData) {
-                    context.task_id = status.task_id
-                    context.setState({
-                        targetTaskPosted: postEnd + 1,
-                        targetTaskSuccess: status.success.length,
-                        warnData: context.state.warnData.concat(status.warn),
-                        failedData: context.state.failedData.concat(status.failed),
-                    })
-                    if (postEnd + 1 === context.state.targetTaskCount){
-                        context.onGetLink()
-                    }
-                }
-            }())
-        }
+        const helper = new ExtractHelper(accessToken)
+        this.startPost(helper, context)
     }
 
+    private startPost(helper: ExtractHelper, context: Extract){
+        const random = this.getRandomNum(80, 99)
+        let postStart = this.postCount
+        let postEnd = this.postCount + random
+        if (postEnd >= this.count){
+            postEnd = this.count - 1
+        }
+        this.postCount += random + 1
+        const data: SingleTaskInfo[] = []
+        for(let i = postStart; i <= postEnd; ++i){
+            data.push(this.state.targetTaskData[i])
+        }
+        helper.add(this.state.semester, this.state.year, this.task_id, data, new class implements ExtractAddCallback {
+            onFailure(code: number, message?: string, e?: CurlToolException) {
+                const failed: FailedTaskInfo[] = context.state.failedData
+                for (let i = 0; i < data.length; i++) {
+                    failed.push(new FailedTaskInfo(data[i].uid, data[i].name, message == null ? "网络请求失败" : message))
+                }
+                context.setState({
+                    targetTaskPosted: postEnd + 1,
+                    failedData: failed,
+                    extractButton: "已提交 " + (postEnd + 1) + " 项，共 " + context.count + " 项……"
+                })
+                if (postEnd + 1 === context.state.targetTaskCount){
+                    context.onGetLink()
+                } else {
+                    context.startPost(helper, context)
+                }
+            }
+
+            onResult(status: ExtractAddStatusData) {
+                context.task_id = status.task_id
+                const failed: FailedTaskInfo[] = context.state.failedData
+                    .concat(status.failed)
+                const warn: WarnTaskInfo[] = context.state.warnData
+                    .concat(status.warn)
+                context.setState({
+                    targetTaskPosted: postEnd + 1,
+                    targetTaskSuccess: status.success.length,
+                    warnData: warn,
+                    failedData: failed,
+                    extractButton: "已提交 " + (postEnd + 1) + " 项，共 " + context.count + " 项……"
+                })
+                if (postEnd + 1 === context.state.targetTaskCount){
+                    context.onGetLink()
+                } else {
+                    context.startPost(helper, context)
+                }
+            }
+        }())
+    }
 
     onGetLink(){
         const context = this
@@ -236,7 +251,8 @@ class Extract extends ReactComponentCompact {
             onResult(link: string) {
                 context.setState({
                     action_doing: false,
-                    extractResultLink: link
+                    extractResultLink: link,
+                    extractButton: "下载"
                 })
             }
         }())
@@ -372,7 +388,7 @@ class Extract extends ReactComponentCompact {
                                 color={"primary"} variant={"contained"} fullWidth={true}
                                 disabled={this.state.filePath === "" || this.state.action_doing}
                                 onClick={this.onClick.bind(this)}>
-                                {this.state.extractResultLink === "" ? "提交" : "下载"}
+                                {this.state.extractButton}
                             </Button>
                         </Grid>
                         <Grid item xs />

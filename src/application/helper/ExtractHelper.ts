@@ -41,7 +41,7 @@ export class ExtractHelper {
                     }
                     const failed = result["failed"]
                     const failedData: FailedTaskInfo[] = []
-                    for (let i = 0; i < warn.length; i++){
+                    for (let i = 0; i < failed.length; i++){
                         failedData.push(new FailedTaskInfo(failed[i]["uid"], failed[i]["name"], failed[i]["error_info"]))
                     }
                     callback.onResult(new ExtractAddStatusData(
